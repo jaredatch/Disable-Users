@@ -3,7 +3,7 @@
  * Plugin Name: Disable Users
  * Plugin URI:  http://wordpress.org/extend/disable-users
  * Description: This plugin provides the ability to disable specific user accounts.
- * Version:     1.0.2
+ * Version:     1.0.3
  * Author:      Jared Atchison
  * Author URI:  http://jaredatchison.com 
  *
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * @author     Jared Atchison
- * @version    1.0.2
+ * @version    1.0.3
  * @package    JA_DisableUsers
  * @copyright  Copyright (c) 2013, Jared Atchison
  * @link       http://jaredatchison.com
@@ -46,6 +46,42 @@ final class ja_disable_users {
 		add_action( 'edit_user_profile_update', array( $this, 'user_profile_field_save' )        );
 		add_action( 'wp_login',                 array( $this, 'user_login'              ), 10, 2 );
 		add_filter( 'login_message',            array( $this, 'user_login_message'      )        );
+		add_filter('manage_users_columns' ,		array( $this, 'manage_users_columns'	)		 );
+		add_action('manage_users_custom_column',array( $this, 'manage_users_custom_column'),	10, 3);
+		add_action('admin_head',				array( $this, 'admin_head'));
+	}
+
+	/**
+	 * Add custom disabled column to users list
+	 *
+	 * @since 1.0.3
+	*/
+	public function manage_users_columns( $defaults ) {
+		$defaults['user_disabled'] = __('Disabled');
+		return $defaults;
+	}
+
+	/**
+	 * Set content of disabled users column
+	 *
+	 * @since 1.0.3
+	*/
+	public function manage_users_custom_column ($empty, $column_name, $user_ID) {
+		#echo "#$column_name--$user_ID--$x#";
+		if ($column_name == 'user_disabled') {
+			if (get_the_author_meta( 'ja_disable_user', $user_ID)	== 1) {
+				return __('Disabled');
+			}
+		}
+	}
+
+	/**
+	 * Make sure disabled column is not too wide
+	 *
+	 * @since 1.0.3
+ 	*/
+	public function admin_head() {
+		echo '<style type="text/css">.column-user_disabled { width: 100px; }</style>';
 	}
 
 	/**
@@ -113,8 +149,15 @@ final class ja_disable_users {
 	 * @param string $user_login
 	 * @param object $user
 	 */
-	public function user_login( $user_login, $user ) {
+	public function user_login( $user_login, $user = null ) {
 
+		if (!$user) {
+			$user = get_user_by('login', $user_login);
+		}
+		if (!$user) {
+			// not logged in - definitely not disabled
+			return;
+		}
 		// Get user meta
 		$disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
 		
