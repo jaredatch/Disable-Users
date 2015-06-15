@@ -3,7 +3,7 @@ Contributors: jaredatch
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL
 Tags: users
 Requires at least: 3.6.0
-Tested up to: 3.6.0
+Tested up to: 4.3
 Stable tag: trunk
 License: GPLv2
  
@@ -19,6 +19,8 @@ This can be useful in a few situations.
 
 * You are working on a site for a client who has an account, but do not want him to login and/or make changes during development.
 * You have a client who has an unpaid invoice.
+
+**[This plugin is on GitHub!](https://github.com/jaredatch/Disable-Users/)** Pull requests are welcome. If possible please report issues through Github.
 
 == Installation ==
 
@@ -37,6 +39,10 @@ Yes, there is a filter in place for that, `ja_disable_users_notice`.
 2. Message when a disabled user tries to login.
 
 == Changelog ==
+
+= 1.0.3 (6/15/2015) =
+* Added Disabled column to manage user screen. Props @basteln3rk on GH.
+* Cleaned up code slightly and updated README information
 
 = 1.0.2 =
 * Removed accidental PHP short form
