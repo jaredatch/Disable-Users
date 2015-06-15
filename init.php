@@ -45,7 +45,7 @@ final class ja_disable_users {
 		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
 		// Filters
 		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
-		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )		   );
+		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
 	}
 
 	/**
