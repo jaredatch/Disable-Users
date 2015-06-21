@@ -3,7 +3,7 @@
  * Plugin Name: Disable Users
  * Plugin URI:  http://wordpress.org/extend/disable-users
  * Description: This plugin provides the ability to disable specific user accounts.
- * Version:     1.0.3
+ * Version:     1.0.4
  * Author:      Jared Atchison
  * Author URI:  http://jaredatchison.com 
  *
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * @author     Jared Atchison
- * @version    1.0.3
+ * @version    1.0.4
  * @package    JA_DisableUsers
  * @copyright  Copyright (c) 2015, Jared Atchison
  * @link       http://jaredatchison.com
@@ -178,7 +178,7 @@ final class ja_disable_users {
 	 */
 	public function manage_users_column_content( $empty, $column_name, $user_ID ) {
 
-		if ( $column_name == 'user_disabled' ) {
+		if ( $column_name == 'ja_user_disabled' ) {
 			if ( get_the_author_meta( 'ja_disable_user', $user_ID )	== 1 ) {
 				return __( 'Disabled', 'ja_disable_users' );
 			}

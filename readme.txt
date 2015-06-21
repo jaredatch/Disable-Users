@@ -40,6 +40,9 @@ Yes, there is a filter in place for that, `ja_disable_users_notice`.
 
 == Changelog ==
 
+= 1.0.4 (6/21/2015) =
+* Bug fix for Disabled column to manage user screen
+
 = 1.0.3 (6/15/2015) =
 * Added Disabled column to manage user screen. Props @basteln3rk on GH.
 * Cleaned up code slightly and updated README information
