@@ -1,8 +1,8 @@
 === Disable Users ===
 Contributors: jaredatch
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL
-Tags: users
-Requires at least: 3.6.0
+Tags: users, login, disable
+Requires at least: 4.0.0
 Tested up to: 4.3
 Stable tag: trunk
 License: GPLv2
@@ -39,6 +39,9 @@ Yes, there is a filter in place for that, `ja_disable_users_notice`.
 2. Message when a disabled user tries to login.
 
 == Changelog ==
+
+= 1.0.5 (11/11/2015) =
+* Added pl_PL transnation - Props Dominik Kocuj
 
 = 1.0.4 (6/21/2015) =
 * Bug fix for Disabled column to manage user screen

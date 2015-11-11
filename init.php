@@ -3,7 +3,7 @@
  * Plugin Name: Disable Users
  * Plugin URI:  http://wordpress.org/extend/disable-users
  * Description: This plugin provides the ability to disable specific user accounts.
- * Version:     1.0.4
+ * Version:     1.0.5
  * Author:      Jared Atchison
  * Author URI:  http://jaredatchison.com 
  *
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * @author     Jared Atchison
- * @version    1.0.4
+ * @version    1.0.5
  * @package    JA_DisableUsers
  * @copyright  Copyright (c) 2015, Jared Atchison
  * @link       http://jaredatchison.com
@@ -43,6 +43,7 @@ final class ja_disable_users {
 		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
 		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
+		
 		// Filters
 		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
 		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
@@ -54,7 +55,10 @@ final class ja_disable_users {
 	 * @since 1.0.0
 	 */
 	public function load_textdomain() {
-		load_plugin_textdomain( 'ja_disable_users', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+		$domain = 'ja_disable_users';
+		$locale = apply_filters( 'plugin_locale', get_locale(), $domain );
+		load_textdomain( $domain, WP_LANG_DIR . '/' . $domain . '/' . $domain . '-' . $locale . '.mo' );
+		load_plugin_textdomain( $domain, false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
 
 	/**
