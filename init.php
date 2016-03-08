@@ -3,7 +3,7 @@
  * Plugin Name: Disable Users
  * Plugin URI:  http://wordpress.org/extend/disable-users
  * Description: This plugin provides the ability to disable specific user accounts.
- * Version:     1.2.0
+ * Version:     1.2.1
  * Author:      Jared Atchison, Stephen Schrauger
  * Author URI:  http://jaredatchison.com
  *
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * @author     Jared Atchison, Stephen Schrauger
- * @version    1.2.0
+ * @version    1.2.1
  * @package    JA_DisableUsers
  * @copyright  Copyright (c) 2015, Jared Atchison
  * @link       http://jaredatchison.com
@@ -218,9 +218,9 @@ final class ja_disable_users {
 	}
 
 	/**
-	 * Tells WordPress about a new page and what function to call to create it
+	 * Tells WordPress about a new settings page and what function to call to create it
 	 *
-	 * @since 1.1.0
+	 * @since 1.2.0
 	 */
 	public function add_plugin_page() {
 		// This page will be under "Settings" menu. add_options_page is merely a WP wrapper for add_submenu_page specifying the 'options-general' menu as parent
@@ -234,10 +234,17 @@ final class ja_disable_users {
 				'create_settings_page'
 			) // since we are putting settings on our own page, we also have to define how to print out the settings
 		);
+
+		global $submenu;
+	    $permalink = admin_url( 'users.php' ).'?only_disabled=1';
+	    $submenu['users.php'][] = array( 'Disabled Users', 'ja-disable-user-onlydisabled', $permalink );
+
 	}
 
 	/**
 	 * Adds a link to this plugin's setting page directly on the WordPress plugin list page
+	 *
+	 * @since 1.2.0
 	 *
 	 * @param $links
 	 * @param $file
@@ -279,13 +286,11 @@ final class ja_disable_users {
 		<?php
 	}
 
-	/**
+	/**toggle_disabled
 	 * Adds settings to settings page for this plugin.
 	 * @since 1.2.0
 	 */
 	public function admin_init() {
-
-
 		add_settings_section(
 			'ja-disable-users-settings-section', // unique name of section
 			'Disable Users - Settings', // start of section text shown to user
@@ -298,6 +303,7 @@ final class ja_disable_users {
 
 	/**
 	 * Adds a setting
+	 * @since 1.2.0
 	 *
 	 * @param $setting_name
 	 * @param $label
@@ -324,12 +330,12 @@ final class ja_disable_users {
 
 	}
 
-	/*
-	**
-	* Creates the HTML code that is printed for each setting input
-	*
-	* @param $args
-	*/
+	/**
+	 * Creates the HTML code that is printed for each setting input
+	 * @since 1.2.0
+	 *
+	 * @param $args
+	 */
 	public function settings_input_checkbox( $args ) {
 		// Note the ID and the name attribute of the element should match that of the ID in the call to add_settings_field.
 		// Because we only call register_setting once, all the options are stored in an array in the database. So we
@@ -358,27 +364,49 @@ final class ja_disable_users {
 		echo $html;
 	}
 
+	/**
+	 * Alters the "All Users" page by modifying the SQL query to show or hide disabled users.
+	 * Based on the site's default preferences and override requests, this function can
+	 * * show only disabled users
+	 * * show all users
+	 * * show only enabled users
+	 * @since 1.2.0
+	 * @param $query_obj
+	 *
+	 * @return mixed
+	 */
 	public function user_query_exceptions($query_obj){
 		// if preference is set to hide disabled users by default, then alter the All Users query to prevent disabled users from showing up
 		global $wpdb;
-		$str_hide_query = " AND ID NOT IN (SELECT user_id from $wpdb->usermeta WHERE meta_key = 'ja_disable_user' AND meta_value = '1')";
+		$str_hide_disabled_query = " AND ID NOT IN (SELECT user_id from $wpdb->usermeta WHERE meta_key = 'ja_disable_user' AND meta_value = '1')";
+		$str_only_disabled_query = " AND ID IN (SELECT user_id from $wpdb->usermeta WHERE meta_key = 'ja_disable_user' AND meta_value = '1')";
+
+
+		if ( !empty( $_REQUEST[ 'only_disabled' ] ) ) {
+			$query_obj->query_where .= $str_only_disabled_query;
+			return $query_obj; // force return here. we don't want the user to select 'only disabled' and 'hide disabled', because they would get an empty list.
+		}
 
 		if (esc_attr( get_option( 'ja-disable-users-setting-hide-disabled' ))) {
 			// preference set to hide disabled users by default. now check if they are manually showing them.
 			if ( empty( $_REQUEST[ 'toggle_disabled' ] ) ) {
 				// 'show_disabled' not specified, so exclude disabled users
 				// search for ja_disable_user=true. if ID is listed, they are disabled.
-				$query_obj->query_where .= $str_hide_query;
+				$query_obj->query_where .= $str_hide_disabled_query;
 			}
 		} else {
 			// preference set to show disabled users by default. now check if they are manually hiding them.
 			if ( !empty( $_REQUEST[ 'toggle_disabled' ] ) ) {
 				// 'hide_disabled' specified, so exclude disabled users
 				// search for ja_disable_user=true. if ID is listed, they are disabled.
-				$query_obj->query_where .= $str_hide_query;
+				$query_obj->query_where .= $str_hide_disabled_query;
 			}
 		}
-		return $query_obj;
+		if ( !empty( $_REQUEST[ 'only_disabled' ] ) ) {
+			$query_obj->query_where .= $str_only_disabled_query;
+		}
+
+			return $query_obj;
 
 	}
 }
