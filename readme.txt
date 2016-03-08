@@ -1,5 +1,5 @@
 === Disable Users ===
-Contributors: jaredatch
+Contributors: jaredatch, schrauger
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL
 Tags: users, login, disable
 Requires at least: 4.0.0
