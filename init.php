@@ -41,6 +41,7 @@ final class ja_disable_users {
 		add_action( 'personal_options_update',    array( $this, 'user_profile_field_save'     )        );
 		add_action( 'edit_user_profile_update',   array( $this, 'user_profile_field_save'     )        );
 		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
+		add_action( 'fbl/after_login',            array( $this, 'fbl_login'                   ), 10, 2 );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
 		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
 		
@@ -139,6 +140,34 @@ final class ja_disable_users {
 			$login_url = add_query_arg( 'disabled', '1', $login_url );
 			wp_redirect( $login_url );
 			exit;
+		}
+	}
+	
+	/**
+	 * Check in Faccebook Login plugin
+	 * to see if user account is disabled
+	 * @since 1.0.0
+	 * @param string $user_login
+	 * @param object $user
+	 */
+	public function fbl_login( $user, $user_id ) {
+
+	
+		if ( !$user_id ) {
+			// not logged in - definitely not disabled
+			return;
+		}
+		// Get user meta
+		$disabled = get_user_meta( $user_id, 'ja_disable_user', true );
+		
+		// Is the use logging in disabled?
+		if ( $disabled == '1' ) {
+			// Clear cookies, a.k.a log user out
+			wp_clear_auth_cookie();
+
+			// Return error message to AJAX
+			wp_send_json( array( 'error' => apply_filters( 'ja_disable_users_notice', __( 'Account disabled', 'ja_disable_users' ) ) ) );
+			die();
 		}
 	}
 
