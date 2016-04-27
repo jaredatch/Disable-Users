@@ -50,8 +50,13 @@ final class ja_disable_users {
 
 		// Plugin Settings
 		// Register the 'settings' page
+		if (is_multisite()) {
+			add_action( 'network_admin_menu', array( $this, 'add_network_plugin_page' ) );
+			add_action('network_admin_edit_ja_disable_users_save', array($this, 'save_network_settings_page'), 10, 0);
+			add_site_option( 'ja-disable-users-setting-hide-disabled', '0' );
+		}
 		add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
+		add_action( 'admin_init', array( $this, 'admin_settings' ) );
 
 		// Add a link from the plugin page to this plugin's settings page
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_action_links' ), 10, 2 );
@@ -180,7 +185,7 @@ final class ja_disable_users {
 	public function manage_users_columns( $defaults ) {
 
 
-		if (esc_attr( get_option( 'ja-disable-users-setting-hide-disabled' ))) {
+		if (esc_attr( $this->get_option( 'ja-disable-users-setting-hide-disabled' ))) {
 			$title = __("Click to show disabled accounts.");
 		} else {
 			$title = __("Click to hide disabled accounts.");
@@ -235,9 +240,42 @@ final class ja_disable_users {
 			) // since we are putting settings on our own page, we also have to define how to print out the settings
 		);
 
+		if (is_multisite() && is_network_admin()) {
+			$permalink = network_admin_url( 'users.php' ) . '?only_disabled=1';
+		} else {
+			$permalink = admin_url( 'users.php' ) . '?only_disabled=1';
+		}
 		global $submenu;
-	    $permalink = admin_url( 'users.php' ).'?only_disabled=1';
-	    $submenu['users.php'][] = array( 'Disabled Users', 'ja-disable-user-onlydisabled', $permalink );
+		$submenu['users.php'][] = array( 'Disabled Users', 'ja-disable-user-onlydisabled', $permalink );
+
+	}
+
+	/**
+	 * Tells WordPress about a new settings page and what function to call to create it
+	 *
+	 * @since 1.2.0
+	 */
+	public function add_network_plugin_page() {
+		// This page will be under "Settings" menu. add_options_page is merely a WP wrapper for add_submenu_page specifying the 'options-general' menu as parent
+		add_submenu_page(
+			"settings.php",
+			"Disable Users Settings", // page title
+			"Disable Users Settings", // menu title
+			"manage_options", // user capability required to edit these settings
+			"ja-disable-users-settings", // new page slug
+			array(
+				$this,
+				'create_settings_page'
+			) // since we are putting settings on our own page, we also have to define how to print out the settings
+		);
+
+		if (is_multisite() && is_network_admin()) {
+			$permalink = network_admin_url( 'users.php' ) . '?only_disabled=1';
+		} else {
+			$permalink = admin_url( 'users.php' ) . '?only_disabled=1';
+		}
+		global $submenu;
+		$submenu['users.php'][] = array( 'Disabled Users', 'ja-disable-user-onlydisabled', $permalink );
 
 	}
 
@@ -270,12 +308,19 @@ final class ja_disable_users {
 	 * @since 1.2.0
 	 */
 	public function create_settings_page() {
+		if (is_multisite() && is_network_admin()){
+			// network admin page doesn't have the luxury of register_setting api,
+			// so a custom hook must be created and called to save the setting.
+			$action = "edit.php?action=ja_disable_users_save";
+		} else {
+			$action = "options.php";
+		}
 		?>
 		<div class="wrap" >
 
 			<h2 >Disable Users - Settings</h2 >
 
-			<form method="post" action="options.php" >
+			<form method="post" action="<?php echo $action?>" >
 				<?php
 				settings_fields( 'ja-disable-users-settings-group' );
 				do_settings_sections( 'ja-disable-users-settings' );
@@ -286,11 +331,23 @@ final class ja_disable_users {
 		<?php
 	}
 
+	public function save_network_settings_page(){
+		if ($_REQUEST['ja-disable-users-setting-hide-disabled']) {
+			// user has set the checkbox. Hide disabled users by default.
+			update_site_option('ja-disable-users-setting-hide-disabled', "1");
+		} else {
+			// user has unset the checkbox. Show disabled users by default.
+			update_site_option('ja-disable-users-setting-hide-disabled', "0");
+		}
+		wp_redirect(add_query_arg(array('page' => 'ja-disable-users-settings', 'updated' => 'true'), network_admin_url('settings.php')));
+		exit();
+	}
+
 	/**toggle_disabled
 	 * Adds settings to settings page for this plugin.
 	 * @since 1.2.0
 	 */
-	public function admin_init() {
+	public function admin_settings() {
 		add_settings_section(
 			'ja-disable-users-settings-section', // unique name of section
 			'Disable Users - Settings', // start of section text shown to user
@@ -319,7 +376,7 @@ final class ja_disable_users {
 			array(   // The array of arguments to pass to the callback. These 3 are referenced in setting_input_checkbox.
 			         'id'      => $setting_id,
 			         'label'   => $label,
-			         'value'   => esc_attr( get_option( $setting_id ))
+			         'value'   => esc_attr( $this->get_option( $setting_id ))
 			)
 		);
 		register_setting(
@@ -387,7 +444,7 @@ final class ja_disable_users {
 			return $query_obj; // force return here. we don't want the user to select 'only disabled' and 'hide disabled', because they would get an empty list.
 		}
 
-		if (esc_attr( get_option( 'ja-disable-users-setting-hide-disabled' ))) {
+		if (esc_attr( $this->get_option( 'ja-disable-users-setting-hide-disabled' ))) {
 			// preference set to hide disabled users by default. now check if they are manually showing them.
 			if ( empty( $_REQUEST[ 'toggle_disabled' ] ) ) {
 				// 'show_disabled' not specified, so exclude disabled users
@@ -408,6 +465,18 @@ final class ja_disable_users {
 
 			return $query_obj;
 
+	}
+
+	/**
+	 * If site is multisite, and page is network admin page, return site option. Otherwise, just regular option.
+	 * @param $setting_id
+	 */
+	public function get_option($setting_id){
+		if (is_multisite() && is_network_admin()){
+			return get_site_option($setting_id);
+		} else {
+			return get_option($setting_id);
+		}
 	}
 }
 new ja_disable_users();
