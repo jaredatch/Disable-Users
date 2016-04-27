@@ -3,7 +3,7 @@
  * Plugin Name: Disable Users
  * Plugin URI:  http://wordpress.org/extend/disable-users
  * Description: This plugin provides the ability to disable specific user accounts.
- * Version:     1.2.1
+ * Version:     1.1.1
  * Author:      Jared Atchison, Stephen Schrauger
  * Author URI:  http://jaredatchison.com
  *
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * @author     Jared Atchison, Stephen Schrauger
- * @version    1.2.1
+ * @version    1.1.1
  * @package    JA_DisableUsers
  * @copyright  Copyright (c) 2015, Jared Atchison
  * @link       http://jaredatchison.com
@@ -344,7 +344,7 @@ final class ja_disable_users {
 
 	/**
 	 * Network admin pages don't have some settings APIs available, so saving must be done manually.
-	 * @since 1.2.1
+	 * @since 1.1.2
 	 */
 	public function save_network_settings_page(){
 		if ($_REQUEST['ja-disable-users-setting-hide-disabled']) {
@@ -362,7 +362,7 @@ final class ja_disable_users {
 	/**
 	 * WP update_site_option apparently doesn't work if the option isn't already added (unlike update_option, which auto-adds if not exists).
 	 * So this is a wrapper to add the option if it doesn't exist already.
-	 * @since 1.2.1
+	 * @since 1.1.2
 	 * @param $setting_id
 	 * @param $value
 	 */

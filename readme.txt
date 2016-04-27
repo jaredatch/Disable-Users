@@ -42,10 +42,13 @@ Yes, there is a filter in place for that, `ja_disable_users_notice`.
 
 == Changelog ==
 
-= 1.2.1 (03/08/2016) =
+= 1.1.2 (04/27/2016) =
+* Fixed network admin pages for multisite installations
+
+= 1.1.1 (03/08/2016) =
 * Added menu item to show only disabled users
 
-= 1.2.0 (03/08/2016) =
+= 1.1.0 (03/08/2016) =
 * Added plugin setting page
 ** Preference to hide disabled users by default when viewing All Users
 
