@@ -1,5 +1,5 @@
 === Disable Users ===
-Contributors: jaredatch
+Contributors: jaredatch, schrauger
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL
 Tags: users, login, disable
 Requires at least: 4.0.0
@@ -20,6 +20,8 @@ This can be useful in a few situations.
 * You are working on a site for a client who has an account, but do not want him to login and/or make changes during development.
 * You have a client who has an unpaid invoice.
 
+Disabled users can also be hidden from the All Users listing, either by default (via the plugin settings page) or manually (by clicking on the link in the Disabled column). A new menu item is added as well, letting you view only disabled users.
+
 **[This plugin is on GitHub!](https://github.com/jaredatch/Disable-Users/)** Pull requests are welcome. If possible please report issues through Github.
 
 == Installation ==
@@ -39,6 +41,13 @@ Yes, there is a filter in place for that, `ja_disable_users_notice`.
 2. Message when a disabled user tries to login.
 
 == Changelog ==
+
+= 1.2.1 (03/08/2016) =
+* Added menu item to show only disabled users
+
+= 1.2.0 (03/08/2016) =
+* Added plugin setting page
+** Preference to hide disabled users by default when viewing All Users
 
 = 1.0.5 (11/11/2015) =
 * Added pl_PL transnation - Props Dominik Kocuj
