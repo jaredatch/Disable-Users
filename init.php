@@ -290,11 +290,16 @@ final class ja_disable_users {
 	 * @return array
 	 */
 	public function plugin_action_links( $links, $file ) {
+		if (is_multisite() && is_network_admin()){
+			$base_page = network_admin_url("settings.php?page=ja-disable-users-settings");
+		} else {
+			$base_page = admin_url('options-general.php?page=ja-disable-users-settings');
+		}
 		if ( strpos( __FILE__, $file ) !== false ) {
 			$links = array_merge(
 				$links,
 				array(
-					'settings' => '<a href="' . admin_url( 'options-general.php?page=ja-disable-users-settings' ) . '">' . __( 'Settings', 'ja-disable-users-settings') . '</a>'
+					'settings' => '<a href="' . $base_page . '">' . __( 'Settings', 'ja-disable-users-settings') . '</a>'
 				)
 			);
 		}
@@ -331,6 +336,9 @@ final class ja_disable_users {
 		<?php
 	}
 
+	/**
+	 * Network admin pages don't have some settings APIs available, so saving must be done manually.
+	 */
 	public function save_network_settings_page(){
 		if ($_REQUEST['ja-disable-users-setting-hide-disabled']) {
 			// user has set the checkbox. Hide disabled users by default.
@@ -339,6 +347,7 @@ final class ja_disable_users {
 			// user has unset the checkbox. Show disabled users by default.
 			update_site_option('ja-disable-users-setting-hide-disabled', "0");
 		}
+		// after saving, redirect to same page (otherwise, it would auto redirect to the network dashboard)
 		wp_redirect(add_query_arg(array('page' => 'ja-disable-users-settings', 'updated' => 'true'), network_admin_url('settings.php')));
 		exit();
 	}
