@@ -42,18 +42,19 @@ final class ja_disable_users {
 		add_action( 'edit_user_profile_update',   array( $this, 'user_profile_field_save'     )        );
 		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
+		add_action( 'wpmu_users_custom_column',   array( $this, 'manage_users_column_content' ), 10, 3 );
 		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
 		
 		// Filters
 		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
 		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
+		add_filter( 'wpmu_users_columns',         array( $this, 'manage_users_columns'	      )        );
 
 		// Plugin Settings
 		// Register the 'settings' page
 		if (is_multisite()) {
 			add_action( 'network_admin_menu', array( $this, 'add_network_plugin_page' ) );
 			add_action('network_admin_edit_ja_disable_users_save', array($this, 'save_network_settings_page'), 10, 0);
-			add_site_option( 'ja-disable-users-setting-hide-disabled', '0' );
 		}
 		add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
 		add_action( 'admin_init', array( $this, 'admin_settings' ) );
@@ -184,13 +185,18 @@ final class ja_disable_users {
 	 */
 	public function manage_users_columns( $defaults ) {
 
-
-		if (esc_attr( $this->get_option( 'ja-disable-users-setting-hide-disabled' ))) {
+		if (esc_attr( $this->get_option( 'ja-disable-users-setting-hide-disabled' )) xor (!empty($_REQUEST['toggle_disabled']))) {
 			$title = __("Click to show disabled accounts.");
 		} else {
 			$title = __("Click to hide disabled accounts.");
 		}
-		$toggle_link = '<a href="?toggle_disabled=1" title="' . $title . '">*</a>';
+		if (!empty($_REQUEST['toggle_disabled'])){
+			// user has overridden. make the link point to default
+			$toggle_link = '<a href="?" title="' . $title . '">*</a>';
+		} else {
+			// user has not overridden. make the link point to override
+			$toggle_link = '<a href="?toggle_disabled=1" title="' . $title . '">*</a>';
+		}
 		$defaults['ja_user_disabled'] = __( 'Disabled' . $toggle_link, 'ja_disable_users' );
 		return $defaults;
 	}
@@ -338,18 +344,40 @@ final class ja_disable_users {
 
 	/**
 	 * Network admin pages don't have some settings APIs available, so saving must be done manually.
+	 * @since 1.2.1
 	 */
 	public function save_network_settings_page(){
 		if ($_REQUEST['ja-disable-users-setting-hide-disabled']) {
 			// user has set the checkbox. Hide disabled users by default.
-			update_site_option('ja-disable-users-setting-hide-disabled', "1");
+			$this->update_site_option('ja-disable-users-setting-hide-disabled', "1");
 		} else {
 			// user has unset the checkbox. Show disabled users by default.
-			update_site_option('ja-disable-users-setting-hide-disabled', "0");
+			$this->update_site_option('ja-disable-users-setting-hide-disabled', "0");
 		}
 		// after saving, redirect to same page (otherwise, it would auto redirect to the network dashboard)
 		wp_redirect(add_query_arg(array('page' => 'ja-disable-users-settings', 'updated' => 'true'), network_admin_url('settings.php')));
 		exit();
+	}
+
+	/**
+	 * WP update_site_option apparently doesn't work if the option isn't already added (unlike update_option, which auto-adds if not exists).
+	 * So this is a wrapper to add the option if it doesn't exist already.
+	 * @since 1.2.1
+	 * @param $setting_id
+	 * @param $value
+	 */
+	public function update_site_option($setting_id, $value){
+		$exists = get_site_option($setting_id, -1);
+		// get_site_option will return false if the option doesn't exist.
+		// However, it will also return false if it exists and the option's value is false!
+		// So we define a default of -1 if the option doesn't exist. As long as the return is
+		// anything other than -1, the option exists and we must update it. Otherwise,
+		// we must add it.
+		if ($exists !== -1){
+			update_site_option( $setting_id, $value );
+		} else {
+			add_site_option( $setting_id, $value );
+		}
 	}
 
 	/**toggle_disabled
@@ -453,20 +481,10 @@ final class ja_disable_users {
 			return $query_obj; // force return here. we don't want the user to select 'only disabled' and 'hide disabled', because they would get an empty list.
 		}
 
-		if (esc_attr( $this->get_option( 'ja-disable-users-setting-hide-disabled' ))) {
-			// preference set to hide disabled users by default. now check if they are manually showing them.
-			if ( empty( $_REQUEST[ 'toggle_disabled' ] ) ) {
-				// 'show_disabled' not specified, so exclude disabled users
-				// search for ja_disable_user=true. if ID is listed, they are disabled.
-				$query_obj->query_where .= $str_hide_disabled_query;
-			}
-		} else {
-			// preference set to show disabled users by default. now check if they are manually hiding them.
-			if ( !empty( $_REQUEST[ 'toggle_disabled' ] ) ) {
-				// 'hide_disabled' specified, so exclude disabled users
-				// search for ja_disable_user=true. if ID is listed, they are disabled.
-				$query_obj->query_where .= $str_hide_disabled_query;
-			}
+		if ((esc_attr( $this->get_option( 'ja-disable-users-setting-hide-disabled' ))) xor (!empty( $_REQUEST[ 'toggle_disabled' ] ))) {
+			// preference set to hide disabled users by default, or is unset but override is active
+
+			$query_obj->query_where .= $str_hide_disabled_query;
 		}
 		if ( !empty( $_REQUEST[ 'only_disabled' ] ) ) {
 			$query_obj->query_where .= $str_only_disabled_query;
