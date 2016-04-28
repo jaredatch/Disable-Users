@@ -1,4 +1,5 @@
-=== Disable Users ===
+# Disable Users #
+
 Contributors: jaredatch, schrauger
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL
 Tags: users, login, disable
@@ -9,7 +10,7 @@ License: GPLv2
  
 Provides the ability to disable specific user accounts.
 
-== Description ==
+## Description ##
 
 This plugin gives you the ability to disable specific user accounts via a profile setting.
 
@@ -24,49 +25,49 @@ Disabled users can also be hidden from the All Users listing, either by default 
 
 **[This plugin is on GitHub!](https://github.com/jaredatch/Disable-Users/)** Pull requests are welcome. If possible please report issues through Github.
 
-== Installation ==
+## Installation ##
 
 1. Upload `disable-users` to your `/wp-content/plugins/` directory.
-1. Edit any user and then look for the "Disable User Account" checkbox.
+2. Edit any user and then look for the "Disable User Account" checkbox.
 
-== Frequently Asked Questions ==
+## Frequently Asked Questions ##
 
-= Can I change the message a disabled user sees? =
+### Can I change the message a disabled user sees? ###
 
 Yes, there is a filter in place for that, `ja_disable_users_notice`.
 
-== Screenshots ==
+## Screenshots##
 
 1. User profile setting available to administrators.
 2. Message when a disabled user tries to login.
 
-== Changelog ==
+## Changelog ##
 
-= 1.1.2 (04/27/2016) =
+#### 1.1.2 (04/27/2016) ####
 * Fixed network admin pages for multisite installations
 
-= 1.1.1 (03/08/2016) =
+#### 1.1.1 (03/08/2016) ####
 * Added menu item to show only disabled users
 
-= 1.1.0 (03/08/2016) =
+#### 1.1.0 (03/08/2016) ####
 * Added plugin setting page
 ** Preference to hide disabled users by default when viewing All Users
 
-= 1.0.5 (11/11/2015) =
+#### 1.0.5 (11/11/2015) ####
 * Added pl_PL transnation - Props Dominik Kocuj
 
-= 1.0.4 (6/21/2015) =
+#### 1.0.4 (6/21/2015) ####
 * Bug fix for Disabled column to manage user screen
 
-= 1.0.3 (6/15/2015) =
+#### 1.0.3 (6/15/2015) ####
 * Added Disabled column to manage user screen. Props @basteln3rk [(flexponsive)](https://www.flexponsive.net).
 * Cleaned up code slightly and updated README information
 
-= 1.0.2 =
+#### 1.0.2 ####
 * Removed accidental PHP short form
 
-= 1.0.1 =
+#### 1.0.1 ####
 * Fixed notice that would show if WP_DEBUG was on. Props @vegasgeek.
 
-= 1.0.0 =
+#### 1.0.0 ####
 * Initial launch
