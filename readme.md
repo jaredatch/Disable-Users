@@ -1,12 +1,12 @@
 # Disable Users #
 
-Contributors: jaredatch, schrauger
-Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL
-Tags: users, login, disable
-Requires at least: 4.0.0
-Tested up to: 4.3
-Stable tag: trunk
-License: GPLv2
+Contributors: jaredatch, schrauger  
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL  
+Tags: users, login, disable  
+Requires at least: 4.0.0  
+Tested up to: 4.3  
+Stable tag: trunk  
+License: GPLv2  
  
 Provides the ability to disable specific user accounts.
 
