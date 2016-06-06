@@ -101,12 +101,7 @@ final class ja_disable_users {
 		if ( !current_user_can( 'edit_users' ) )
 			return;
 
-		if ( !isset( $_POST['ja_disable_user'] ) ) {
-			$disabled = 0;
-		} else {
-			$disabled = $_POST['ja_disable_user'];
-		}
-	 
+		$disabled = isset( $_POST['ja_disable_user'] ) ? 1 : 0;
 		update_user_meta( $user_id, 'ja_disable_user', $disabled );
 	}
 
