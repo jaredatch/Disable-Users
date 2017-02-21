@@ -119,7 +119,7 @@ final class ja_disable_users {
 	 * @param object $user
      * @return boolean true if disabled, false if enabled
 	 */
-	public function is_user_disabled( $user_id ) {
+	private function is_user_disabled( $user_id ) {
 
 		// Get user meta
 		$disabled = get_user_meta( $user_id, 'ja_disable_user', true );
