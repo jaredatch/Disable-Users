@@ -107,7 +107,53 @@ final class ja_disable_users {
 			$disabled = $_POST['ja_disable_user'];
 		}
 
+		// Store disabled status before update
+		$originally_disabled = $this->is_user_disabled( $user_id );
+
+		// Update user's disabled status
 		update_user_meta( $user_id, 'ja_disable_user', $disabled );
+
+        /**
+         * Trigger an action when a disabled user's account has been
+         * enabled.
+         *
+         * @todo add @since when a version number is set on merge
+         * @param int $user_id The ID of the user being enabled
+         */
+        if ( $originally_disabled && $disabled == 0 ) {
+            do_action( 'ja_disable_users_user_enabled', $user_id );
+        }
+
+		/**
+		 * Trigger an action when a user's account is enabled
+		 *
+		 * @todo add @since when a version number is set on merge
+		 * @param int $user_id The ID of the user being disabled
+		 */
+        if ( ! $originally_disabled && $disabled == 1 ) {
+            do_action( 'ja_disable_users_user_disabled', $user_id );
+        }
+
+	}
+
+	/**
+	 * Checks if a user is disabled
+	 *
+	 * @todo  ADD @since VERSION ON DEPLOYMENT
+	 * @param int $user_id The user ID to check
+	 * @return boolean true if disabled, false if enabled
+	 */
+	private function is_user_disabled( $user_id ) {
+
+		// Get user meta
+		$disabled = get_user_meta( $user_id, 'ja_disable_user', true );
+
+		// Is the use logging in disabled?
+		if ( $disabled == '1' ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -126,13 +172,21 @@ final class ja_disable_users {
 			// not logged in - definitely not disabled
 			return;
 		}
-		// Get user meta
-		$disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
 
 		// Is the use logging in disabled?
-		if ( $disabled == '1' ) {
+		if ( $this->is_user_disabled( $user->ID ) ) {
 			// Clear cookies, a.k.a log user out
 			wp_clear_auth_cookie();
+
+			/**
+			 * Trigger an action when a disabled user attempts
+             * to login.
+             *
+             * @param WP_User $user The user who attempted to login
+			 *
+			 * @todo add @since when a version number is set on merge
+			 */
+			do_action( 'ja_disable_users_disabled_login_attempt', $user );
 
 			// Build login URL and then redirect
 			$login_url = site_url( 'wp-login.php', 'login' );
