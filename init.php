@@ -5,13 +5,13 @@
  * Description: This plugin provides the ability to disable specific user accounts.
  * Version:     1.0.5
  * Author:      Jared Atchison
- * Author URI:  http://jaredatchison.com 
+ * Author URI:  http://jaredatchison.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -35,19 +35,18 @@ final class ja_disable_users {
 	function __construct() {
 
 		// Actions
-		add_action( 'init',                             array( $this, 'load_textdomain'                                         )        );
-		add_action( 'show_user_profile',                array( $this, 'use_profile_field'                                       )        );
-		add_action( 'edit_user_profile',                array( $this, 'use_profile_field'                                       )        );
-		add_action( 'personal_options_update',          array( $this, 'user_profile_field_save'                                 )        );
-		add_action( 'edit_user_profile_update',         array( $this, 'user_profile_field_save'                                 )        );
-		add_action( 'wp_login',                         array( $this, 'user_login'                                              ), 10, 2 );
-		add_action( 'manage_users_custom_column',       array( $this, 'manage_users_column_content'                             ), 10, 3 );
-		add_action( 'admin_footer-users.php',	        array( $this, 'manage_users_css'                                        )        );
+		add_action( 'init',                       array( $this, 'load_textdomain'             )        );
+		add_action( 'show_user_profile',          array( $this, 'use_profile_field'           )        );
+		add_action( 'edit_user_profile',          array( $this, 'use_profile_field'           )        );
+		add_action( 'personal_options_update',    array( $this, 'user_profile_field_save'     )        );
+		add_action( 'edit_user_profile_update',   array( $this, 'user_profile_field_save'     )        );
+		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
+		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
+		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
 
 		// Filters
-		add_filter( 'login_message',                    array( $this, 'user_login_message'                                      )        );
-		add_filter( 'manage_users_columns',             array( $this, 'manage_users_columns'	                                )        );
-		add_filter( 'comment_notification_recipients',  array( $this, 'remove_disabled_users_from_new_comment_notifications'    ), 10, 2 );
+		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
+		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
 	}
 
 	/**
@@ -74,19 +73,19 @@ final class ja_disable_users {
 		if ( !current_user_can( 'edit_users' ) )
 			return;
 		?>
-		<table class="form-table">
-			<tbody>
-				<tr>
-					<th>
-						<label for="ja_disable_user"><?php _e(' Disable User Account', 'ja_disable_users' ); ?></label>
-					</th>
-					<td>
-						<input type="checkbox" name="ja_disable_user" id="ja_disable_user" value="1" <?php checked( 1, get_the_author_meta( 'ja_disable_user', $user->ID ) ); ?> />
-						<span class="description"><?php _e( 'If checked, the user cannot login with this account.' , 'ja_disable_users' ); ?></span>
-					</td>
-				</tr>
-			<tbody>
-		</table>
+        <table class="form-table">
+            <tbody>
+            <tr>
+                <th>
+                    <label for="ja_disable_user"><?php _e(' Disable User Account', 'ja_disable_users' ); ?></label>
+                </th>
+                <td>
+                    <input type="checkbox" name="ja_disable_user" id="ja_disable_user" value="1" <?php checked( 1, get_the_author_meta( 'ja_disable_user', $user->ID ) ); ?> />
+                    <span class="description"><?php _e( 'If checked, the user cannot login with this account.' , 'ja_disable_users' ); ?></span>
+                </td>
+            </tr>
+            <tbody>
+        </table>
 		<?php
 	}
 
@@ -107,30 +106,9 @@ final class ja_disable_users {
 		} else {
 			$disabled = $_POST['ja_disable_user'];
 		}
-	 
+
 		update_user_meta( $user_id, 'ja_disable_user', $disabled );
 	}
-
-	/**
-	 * Checks if a user is disabled
-	 *
-	 * @todo  ADD @since VERSION ON DEPLOYMENT
-	 * @param int $user_id The user ID to check
-	 * @param object $user
-     * @return boolean true if disabled, false if enabled
-	 */
-	private function is_user_disabled( $user_id ) {
-
-		// Get user meta
-		$disabled = get_user_meta( $user_id, 'ja_disable_user', true );
-
-		// Is the use logging in disabled?
-		if ( $disabled == '1' ) {
-		    return true;
-		}
-
-		return false;
-    }
 
 	/**
 	 * After login check to see if user account is disabled
@@ -148,9 +126,11 @@ final class ja_disable_users {
 			// not logged in - definitely not disabled
 			return;
 		}
+		// Get user meta
+		$disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
 
 		// Is the use logging in disabled?
-		if ( $this->is_user_disabled( $user->ID ) ) {
+		if ( $disabled == '1' ) {
 			// Clear cookies, a.k.a log user out
 			wp_clear_auth_cookie();
 
@@ -172,7 +152,7 @@ final class ja_disable_users {
 	public function user_login_message( $message ) {
 
 		// Show the error message if it seems to be a disabled user
-		if ( isset( $_GET['disabled'] ) && $_GET['disabled'] == 1 ) 
+		if ( isset( $_GET['disabled'] ) && $_GET['disabled'] == 1 )
 			$message =  '<div id="login_error">' . apply_filters( 'ja_disable_users_notice', __( 'Account disabled', 'ja_disable_users' ) ) . '</div>';
 
 		return $message;
@@ -203,7 +183,7 @@ final class ja_disable_users {
 	public function manage_users_column_content( $empty, $column_name, $user_ID ) {
 
 		if ( $column_name == 'ja_user_disabled' ) {
-			if ( $this->is_user_disabled( $user_ID ) ) {
+			if ( get_the_author_meta( 'ja_disable_user', $user_ID )	== 1 ) {
 				return __( 'Disabled', 'ja_disable_users' );
 			}
 		}
@@ -213,40 +193,9 @@ final class ja_disable_users {
 	 * Specifiy the width of our custom column
 	 *
 	 * @since 1.0.3
- 	 */
+	 */
 	public function manage_users_css() {
 		echo '<style type="text/css">.column-ja_user_disabled { width: 80px; }</style>';
 	}
-
-	/**
-     * Remove the post author's email address from new commemnt/postback/trackback
-     * notifications if the author's account is disabled.
-     *
-     * @todo  ADD @since VERSION ON DEPLOYMENT
-	 * @param array $emails The array of email addresses to be notified when there is a new post comment
-	 * @param int $comment_id The ID of the new comment
-	 *
-	 * @return array The updated array of email addresses to be notified
-	 */
-	public function remove_disabled_users_from_new_comment_notifications( $emails, $comment_id ) {
-
-	    // Retrieve the Comment
-        $comment = get_comment( $comment_id );
-
-        // Retrieve the related post
-        $post = get_post ( $comment->comment_post_ID );
-
-        // Check if the post author is disabled
-        if ( $this->is_user_disabled( $post->post_author ) ) {
-	        // Retrieve the Author's User Record
-	        $author = get_user_by( 'ID', $post->post_author );
-
-	        // Remove the author from the comment notifications array
-	        $emails = array_diff( $emails, array( $author->user_email ) );
-        }
-
-        return $emails;
-    }
-
 }
 new ja_disable_users();
