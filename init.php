@@ -36,6 +36,7 @@ final class ja_disable_users {
 
 		// Actions
 		add_action( 'init',                       array( $this, 'load_textdomain'             )        );
+		add_action( 'rest_api_init',              array( $this, 'register_rest_endpoints'     )        );
 		add_action( 'show_user_profile',          array( $this, 'use_profile_field'           )        );
 		add_action( 'edit_user_profile',          array( $this, 'use_profile_field'           )        );
 		add_action( 'personal_options_update',    array( $this, 'user_profile_field_save'     )        );
@@ -197,5 +198,30 @@ final class ja_disable_users {
 	public function manage_users_css() {
 		echo '<style type="text/css">.column-ja_user_disabled { width: 80px; }</style>';
 	}
+
+	public function register_rest_endpoints() {
+
+		register_rest_route( 'wp/v2', '/users/(?P<id>\d+)/enable', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'rest_enable_user'),
+			'permission_callback' => current_user_can( 'edit_users ')
+		) );
+
+		register_rest_route( 'wp/v2', '/users/(?P<id>\d+)/disable', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'rest_enable_user'),
+			'permission_callback' => current_user_can( 'edit_users ')
+		) );
+
+	}
+
+	public function rest_enable_user( WP_REST_Request $request ) {
+
+    }
+
+	public function rest_disable_user( WP_REST_Request $request ) {
+
+	}
+
 }
 new ja_disable_users();
