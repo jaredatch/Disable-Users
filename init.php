@@ -48,6 +48,7 @@ final class ja_disable_users {
 		// Filters
 		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
 		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
+		add_filter( 'rest_authentication_errors', array( $this, 'rest_api_access'             )        );
 	}
 
 	/**
@@ -227,13 +228,17 @@ final class ja_disable_users {
 		register_rest_route( 'wp/v2', '/users/(?P<id>\d+)/enable', array(
 			'methods' => 'POST',
 			'callback' => array( $this, 'rest_enable_user'),
-			'permission_callback' => array( $this, 'can_edit_users' ),
+			'permission_callback' => function () {
+				return current_user_can( 'edit_users' );
+			},
 		) );
 
 		register_rest_route( 'wp/v2', '/users/(?P<id>\d+)/disable', array(
 			'methods' => 'POST',
 			'callback' => array( $this, 'rest_disable_user'),
-			'permission_callback' => array( $this, 'can_edit_users' ),
+			'permission_callback' => function () {
+				return current_user_can( 'edit_users' );
+			},
 		) );
 
 	}
@@ -246,6 +251,11 @@ final class ja_disable_users {
 	 * @return bool
 	 */
 	public function can_edit_users() {
+
+	    global $current_user;
+
+	    print_r( $current_user );
+
         return current_user_can( 'edit_users' );
     }
 
@@ -307,5 +317,22 @@ final class ja_disable_users {
 		status_header( 204 );
 		exit;
     }
+
+	/**
+	 * Returning an authentication error if a user who is logged in is also disabled.
+	 *
+	 * @since 1.1.0
+	 * @param WP_Error|null|bool
+	 * @return mixed
+	 */
+	function rest_api_access( $access ) {
+
+		if ( is_user_logged_in() && $this->is_user_disabled( get_current_user_id() ) ) {
+
+			return new WP_Error( 'rest_cannot_access', __( 'User disabled.', 'disable-users' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+
+		return $access;
+	}
 }
 new ja_disable_users();
