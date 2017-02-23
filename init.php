@@ -35,18 +35,19 @@ final class ja_disable_users {
 	function __construct() {
 
 		// Actions
-		add_action( 'init',                       array( $this, 'load_textdomain'             )        );
-		add_action( 'show_user_profile',          array( $this, 'use_profile_field'           )        );
-		add_action( 'edit_user_profile',          array( $this, 'use_profile_field'           )        );
-		add_action( 'personal_options_update',    array( $this, 'user_profile_field_save'     )        );
-		add_action( 'edit_user_profile_update',   array( $this, 'user_profile_field_save'     )        );
-		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
-		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
-		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
-		
+		add_action( 'init',                             array( $this, 'load_textdomain'                 )        );
+		add_action( 'show_user_profile',                array( $this, 'use_profile_field'               )        );
+		add_action( 'edit_user_profile',                array( $this, 'use_profile_field'               )        );
+		add_action( 'personal_options_update',          array( $this, 'user_profile_field_save'         )        );
+		add_action( 'edit_user_profile_update',         array( $this, 'user_profile_field_save'         )        );
+		add_action( 'wp_login',                         array( $this, 'user_login'                      ), 10, 2 );
+		add_action( 'manage_users_custom_column',       array( $this, 'manage_users_column_content'     ), 10, 3 );
+		add_action( 'admin_footer-users.php',	        array( $this, 'manage_users_css'                )        );
+
 		// Filters
-		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
-		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
+		add_filter( 'login_message',                    array( $this, 'user_login_message'              )        );
+		add_filter( 'manage_users_columns',             array( $this, 'manage_users_columns'	        )        );
+		add_filter( 'wp_mail',                          array( $this, 'do_not_email_disabled_users'     )        );
 	}
 
 	/**
@@ -111,6 +112,27 @@ final class ja_disable_users {
 	}
 
 	/**
+	 * Checks if a user is disabled
+	 *
+	 * @since 1.1.0
+	 * @param int $user_id The user ID to check
+	 * @param object $user
+     * @return boolean true if disabled, false if enabled
+	 */
+	private function is_user_disabled( $user_id ) {
+
+		// Get user meta
+		$disabled = get_user_meta( $user_id, 'ja_disable_user', true );
+
+		// Is the use logging in disabled?
+		if ( $disabled == '1' ) {
+		    return true;
+		}
+
+		return false;
+    }
+
+	/**
 	 * After login check to see if user account is disabled
 	 *
 	 * @since 1.0.0
@@ -126,11 +148,9 @@ final class ja_disable_users {
 			// not logged in - definitely not disabled
 			return;
 		}
-		// Get user meta
-		$disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
-		
+
 		// Is the use logging in disabled?
-		if ( $disabled == '1' ) {
+		if ( $this->is_user_disabled( $user->ID ) ) {
 			// Clear cookies, a.k.a log user out
 			wp_clear_auth_cookie();
 
@@ -183,7 +203,7 @@ final class ja_disable_users {
 	public function manage_users_column_content( $empty, $column_name, $user_ID ) {
 
 		if ( $column_name == 'ja_user_disabled' ) {
-			if ( get_the_author_meta( 'ja_disable_user', $user_ID )	== 1 ) {
+			if ( $this->is_user_disabled( $user_ID ) ) {
 				return __( 'Disabled', 'ja_disable_users' );
 			}
 		}
@@ -197,5 +217,55 @@ final class ja_disable_users {
 	public function manage_users_css() {
 		echo '<style type="text/css">.column-ja_user_disabled { width: 80px; }</style>';
 	}
+
+	/***
+     * Returns an array containing the email addresses of all disabled users.
+     * If there are no disabled users, returns null.
+     *
+     * Using the 'ja_disable_users_disabled_email_addresses' filter you can modify the
+     * the returned array.
+     *
+     * @since 1.1.0
+	 * @return null|array
+	 */
+	private function get_disabled_users_email_addresses() {
+        global $wpdb;
+	    $sql = "SELECT user_email FROM {$wpdb->prefix}users u INNER JOIN {$wpdb->prefix}usermeta um ON u.ID = um.user_id AND um.meta_key = 'ja_disable_user' WHERE um.meta_value = '1'";
+
+	    return apply_filters('ja_disable_users_disabled_email_addresses', $wpdb->get_col( $sql ) );
+    }
+
+	/**
+     * Removes any disabled user's email addresses from the To: email header.
+     * Works with comma separated values, or an array for to $args['to'] value.
+     *
+     * @since 1.1.0
+	 * @param array $args A compacted array of wp_mail() arguments, including the "to" email,
+	 *                    subject, message, headers, and attachments values.
+	 *
+	 * @return array The updated array of arguments
+	 */
+	public function do_not_email_disabled_users( $args ) {
+
+	    if ( ! isset( $args['to'] ) ) {
+	        return $args;
+        }
+
+        // Get an array of the users being sent to
+        if ( is_array( $args['to'] ) ) {
+	        $to = $args['to'];
+        } else {
+	        $to = array_map( 'trim', explode( ',', $args['to'] ) );
+        }
+
+	    // Get an array of disabled users
+        $disabled_users = $this->get_disabled_users_email_addresses();
+
+        // Update wp_mail() with the remaining email addresses
+        $args['to'] = implode(',', array_diff( $to, $disabled_users ) );
+
+        return $args;
+
+    }
 }
 new ja_disable_users();
