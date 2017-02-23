@@ -112,6 +112,23 @@ final class ja_disable_users {
 	}
 
 	/**
+	 * Checks if a user is disabled
+	 *
+	 * @todo  ADD @since VERSION ON DEPLOYMENT
+	 * @param int $user_id The user ID to check
+	 * @return boolean true if disabled, false if enabled
+	 */
+	private function is_user_disabled( $user_id ) {
+		// Get user meta
+		$disabled = get_user_meta( $user_id, 'ja_disable_user', true );
+		// Is the use logging in disabled?
+		if ( $disabled == '1' ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * After login check to see if user account is disabled
 	 *
 	 * @since 1.0.0
@@ -199,29 +216,96 @@ final class ja_disable_users {
 		echo '<style type="text/css">.column-ja_user_disabled { width: 80px; }</style>';
 	}
 
+	/**
+	 * Register endpoints to allow for the disabling and enabling of users
+     * via the WordPress REST API.
+     *
+     * @todo add @since on merge.
+	 */
 	public function register_rest_endpoints() {
 
 		register_rest_route( 'wp/v2', '/users/(?P<id>\d+)/enable', array(
 			'methods' => 'POST',
 			'callback' => array( $this, 'rest_enable_user'),
-			'permission_callback' => current_user_can( 'edit_users ')
+			'permission_callback' => array( $this, 'can_edit_users' ),
 		) );
 
 		register_rest_route( 'wp/v2', '/users/(?P<id>\d+)/disable', array(
 			'methods' => 'POST',
-			'callback' => array( $this, 'rest_enable_user'),
-			'permission_callback' => current_user_can( 'edit_users ')
+			'callback' => array( $this, 'rest_disable_user'),
+			'permission_callback' => array( $this, 'can_edit_users' ),
 		) );
 
 	}
 
-	public function rest_enable_user( WP_REST_Request $request ) {
-
+	/**
+     * Check if the current user can modify user accounts.
+     * Required for the permission check in the register_rest_endpoints();
+     *
+	 * @todo add @since on merge.
+	 * @return bool
+	 */
+	public function can_edit_users() {
+        return current_user_can( 'edit_users' );
     }
 
-	public function rest_disable_user( WP_REST_Request $request ) {
+	/**
+     * REST Endpoint Handler
+     *
+     * Enable a user account
+     *
+	 * @todo add @since on merge.
+	 * @param WP_REST_Request $request The REST API Request
+     * @return null|WP_Error Returns HTTP Status Code 204 on Success, or a WP_Error on Failure
+     *
+	 */
+	public function rest_enable_user( WP_REST_Request $request ) {
 
+		$user_id = $request->get_param( 'id' );
+		return $this->handle_rest_request( $user_id, '0' );
 	}
 
+	/**
+	 * REST Endpoint Handler
+	 *
+	 * Disable a user account
+	 *
+	 * @todo add @since on merge.
+	 * @param WP_REST_Request $request The REST API Request
+	 * @return null|WP_Error Returns HTTP Status Code 204 on Success, or a WP_Error on Failure
+	 *
+	 */
+	public function rest_disable_user( WP_REST_Request $request ) {
+
+		$user_id = $request->get_param( 'id' );
+		return $this->handle_rest_request( $user_id, '1' );
+	}
+
+	/**
+	 * REST Endpoint Handler
+	 *
+	 * Enable a user account
+	 *
+	 * @todo add @since on merge.
+	 * @param int $user_id The User ID to be modified
+     * @param int $disabled 1 to enable the user account, 0 to disable it
+	 * @return null|WP_Error Returns HTTP Status Code 204 on Success, or a WP_Error on Failure
+	 *
+	 */
+	private function handle_rest_request( $user_id, $disabled ) {
+
+		// Double check that the user account exists
+		$user = get_user_by( 'id', $user_id );
+
+		// If the user does not exist, return a 404 error
+		if ( null == $user ) {
+			return new WP_Error('ja_disable_users_user_not_found', 'The requested user does not exist', array( 'status' => 404 ) );
+		}
+
+		update_user_meta( $user_id, 'ja_disable_user', $disabled );
+
+		status_header( 204 );
+		exit;
+    }
 }
 new ja_disable_users();
