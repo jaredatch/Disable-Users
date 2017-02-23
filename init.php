@@ -264,13 +264,8 @@ final class ja_disable_users {
         // Update wp_mail() with the remaining email addresses
         $args['to'] = implode(',', array_diff( $to, $disabled_users ) );
 
-        var_dump($args);
+        return $args;
 
-        die();
-
-	}
-
-
-
+    }
 }
 new ja_disable_users();
