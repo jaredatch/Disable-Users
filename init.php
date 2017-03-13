@@ -42,11 +42,14 @@ final class ja_disable_users {
 		add_action( 'edit_user_profile_update',   array( $this, 'user_profile_field_save'     )        );
 		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
-		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
+		add_action( 'admin_footer-users.php',     array( $this, 'manage_users_css'            )        );
+		add_action( 'admin_notices',              array( $this, 'bulk_disable_user_notices'   )        );
 		
 		// Filters
 		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
 		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
+		add_filter( 'bulk_actions-users',         array( $this, 'bulk_action_disable_users'   )        );
+		add_filter( 'handle_bulk_actions-users',  array( $this, 'handle_bulk_disable_users'   ), 10, 3 );
 	}
 
 	/**
@@ -197,5 +200,67 @@ final class ja_disable_users {
 	public function manage_users_css() {
 		echo '<style type="text/css">.column-ja_user_disabled { width: 80px; }</style>';
 	}
+
+	/**
+	 * Add bulk actions to enable/disable users
+	 * @since 1.0.6
+	 */
+	public function bulk_action_disable_users($bulk_actions) {
+		$bulk_actions['ja_enable_users']  = __( 'Enable',  'ja-disable-users' );
+		$bulk_actions['ja_disable_users'] = __( 'Disable', 'ja-disable_users' );
+		return $bulk_actions;
+	}
+
+	/**
+	 * Handle the bulk action to enable/disable users
+	 * @since 1.0.6
+	 */
+	public function handle_bulk_actions_disable_users($redirect_to, $doaction, $user_ids) {
+		if ($doaction !== 'ja_disable_users' && $doaction !== 'ja_enable_users'){
+			return $redirect_to;
+		}
+
+		$disabled = ($doaction === 'ja_disable_users') ? 1 : 0;
+
+		foreach ( $user_ids as $user_id ){
+			update_user_meta( $user_id, 'ja_disable_user', $disabled );
+		}
+
+		if ($disabled){
+			$redirect_to = add_query_arg( 'ja_disabled', count($user_ids), $redirect_to );
+			$redirect_to = remove_query_arg( 'ja_enabled', $redirect_to );
+		} else {
+			$redirect_to = add_query_arg( 'ja_enabled',  count($user_ids), $redirect_to );
+			$redirect_to = remove_query_arg( 'ja_disabled', $redirect_to );
+		}
+		return $redirect_to;
+	}
+
+	/**
+	 * Add admin notices after enabling/disabling users
+	 * @since 1.0.6
+	 */
+	public function bulk_disable_user_notices() {
+		if (! empty( $_REQUEST['ja_enabled'] ) ){
+			$updated = intval( $_REQUEST['ja_enabled'] );
+			printf( '<div id="message" class="updated">' .
+				_n( 'Enabled %s user.',
+					'Enabled %s users.',
+					$updated,
+					'ja-disable-users'
+				) . '</div>', $updated );
+		}
+
+		if (! empty( $_REQUEST['ja_disabled'] ) ){
+			$updated = intval( $_REQUEST['ja_disabled'] );
+			printf( '<div id="message" class="updated">' .
+				_n( 'Disabled %s user.',
+					'Disabled %s users.',
+					$updated,
+					'ja-disable-users'
+				) . '</div>', $updated );
+		}
+	}
 }
+
 new ja_disable_users();
