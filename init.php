@@ -110,6 +110,10 @@ final class ja_disable_users {
 	 */
 	public function use_profile_field( $user ) {
 
+		//Super admins can not be banned
+		if( is_multisite() && is_super_admin( $user->ID ) )
+			return;
+
 		// Only show this option to users who can delete other users
 		if ( !current_user_can( $this->get_edit_cap() ) )
 			return;
