@@ -138,8 +138,12 @@ final class ja_disable_users {
 	 */
 	public function user_profile_field_save( $user_id ) {
 
+		//Don't disable super admins
+		if( is_multisite() && is_super_admin( $user_id ) )
+			return;
+
 		// Only worry about saving this field if the user has access
-		if ( !current_user_can( 'edit_users' ) )
+		if ( !current_user_can( $this->get_edit_cap() ) )
 			return;
 
 		if ( !isset( $_POST['ja_disable_user'] ) ) {
