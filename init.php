@@ -3,7 +3,7 @@
  * Plugin Name: Disable Users
  * Plugin URI:  http://wordpress.org/extend/disable-users
  * Description: This plugin provides the ability to disable specific user accounts.
- * Version:     1.1.0
+ * Version:     2.0
  * Author:      Jared Atchison, khromov
  * Author URI:  http://jaredatchison.com 
  *
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * @author     Jared Atchison
- * @version    1.1.0
+ * @version    2.0
  * @package    JA_DisableUsers
  * @copyright  Copyright (c) 2015, Jared Atchison
  * @link       http://jaredatchison.com
@@ -40,17 +40,17 @@ final class ja_disable_users {
 		add_action( 'edit_user_profile',          array( $this, 'use_profile_field'           )        );
 		add_action( 'personal_options_update',    array( $this, 'user_profile_field_save'     )        );
 		add_action( 'edit_user_profile_update',   array( $this, 'user_profile_field_save'     )        );
-		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
 		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
 	    add_action( 'admin_post_ja_disable_user', array( $this, 'toggle_user'                 ) );
 	    add_action( 'admin_post_ja_enable_user',  array( $this, 'toggle_user'                 ) );
 
 		// Filters
-		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
 		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
         add_filter( 'wpmu_users_columns',         array( $this, 'manage_users_columns'	      )        );
-	}
+        add_filter( 'authenticate',               array( $this, 'user_login'                  ), 1000, 3 );
+
+    }
 
   /**
    * Gets the capability associated with banning a user
@@ -122,7 +122,7 @@ final class ja_disable_users {
 			<tbody>
 				<tr>
 					<th>
-						<label for="ja_disable_user"><?php _e(' Disable User Account', 'ja_disable_users' ); ?></label>
+						<label for="ja_disable_user"><?php _e('Disable User Account', 'ja_disable_users' ); ?></label>
 					</th>
 					<td>
 						<input type="checkbox" name="ja_disable_user" id="ja_disable_user" value="1" <?php checked( 1, get_the_author_meta( 'ja_disable_user', $user->ID ) ); ?> />
@@ -159,52 +159,27 @@ final class ja_disable_users {
 		update_user_meta( $user_id, 'ja_disable_user', $disabled );
 	}
 
-	/**
-	 * After login check to see if user account is disabled
-	 *
-	 * @since 1.0.0
-	 * @param string $user_login
-	 * @param object $user
-	 */
-	public function user_login( $user_login, $user = null ) {
+   /**
+    * @param $user
+    * @param $username
+    * @param $password
+    *
+    * @return mixed
+    */
+	public function user_login( $user, $username, $password ) {
 
-		if ( !$user ) {
-			$user = get_user_by('login', $user_login);
-		}
-		if ( !$user ) {
-			// not logged in - definitely not disabled
-			return;
-		}
-		// Get user meta
-		$disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
-		
-		// Is the use logging in disabled?
-		if ( $disabled == '1' ) {
-			// Clear cookies, a.k.a log user out
-			wp_clear_auth_cookie();
+		//If this is a valid user, check if the user is disabled before logging in
+		if(is_a($user,'WP_User')) {
+          $disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
 
-			// Build login URL and then redirect
-			$login_url = site_url( 'wp-login.php', 'login' );
-			$login_url = add_query_arg( 'disabled', '1', $login_url );
-			wp_redirect( $login_url );
-			exit;
-		}
-	}
+          // Is the use logging in disabled?
+          if ( $disabled == '1' ) {
+            return new WP_Error('ja_user_disabled',__('<strong>ERROR</strong>: Account disabled.', 'ja_disable_users'));
+          }
+        }
 
-	/**
-	 * Show a notice to users who try to login and are disabled
-	 *
-	 * @since 1.0.0
-	 * @param string $message
-	 * @return string
-	 */
-	public function user_login_message( $message ) {
-
-		// Show the error message if it seems to be a disabled user
-		if ( isset( $_GET['disabled'] ) && $_GET['disabled'] == 1 ) 
-			$message =  '<div id="login_error">' . apply_filters( 'ja_disable_users_notice', __( 'Account disabled', 'ja_disable_users' ) ) . '</div>';
-
-		return $message;
+		//Pass on any existing errors
+        return $user;
 	}
 
 	/**
@@ -254,7 +229,7 @@ final class ja_disable_users {
 	}
 
 	/**
-	 * Specifiy the width of our custom column
+	 * Add basic styles
 	 *
 	 * @since 1.0.3
  	 */
