@@ -43,11 +43,52 @@ final class ja_disable_users {
 		add_action( 'wp_login',                   array( $this, 'user_login'                  ), 10, 2 );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_column_content' ), 10, 3 );
 		add_action( 'admin_footer-users.php',	  array( $this, 'manage_users_css'            )        );
-		
+	    add_action( 'admin_post_ja_disable_user', array( $this, 'toggle_user'                 ) );
+	    add_action( 'admin_post_ja_enable_user',  array( $this, 'toggle_user'                 ) );
+
 		// Filters
 		add_filter( 'login_message',              array( $this, 'user_login_message'          )        );
 		add_filter( 'manage_users_columns',       array( $this, 'manage_users_columns'	      )        );
+        add_filter( 'wpmu_users_columns',         array( $this, 'manage_users_columns'	      )        );
 	}
+
+  /**
+   * Gets the capability associated with banning a user
+   * @return string
+   */
+	function get_edit_cap() {
+		return is_multisite() ? 'manage_network_users' : 'edit_users';
+	}
+
+	/**
+	 * Toggles the users disabled status
+	 *
+	 * @since 1.1.0
+	 */
+	function toggle_user() {
+		$nonce_name = (isset($_GET['action']) && $_GET['action'] === 'ja_disable_user') ? 'ja_disable_user_' : 'ja_enable_user_';
+		if(current_user_can($this->get_edit_cap()) && isset($_GET['ja_user_id']) && isset($_GET['ja_nonce']) && wp_verify_nonce($_GET['ja_nonce'], $nonce_name . $_GET['ja_user_id'])) {
+
+			//Don't disable super admins
+			if(is_multisite() && is_super_admin((int)$_GET['ja_user_id'])) {
+			  wp_die(__('Super admins can not be disabled.', 'ja_disable_users'));
+			}
+
+			update_user_meta( (int)$_GET['ja_user_id'], 'ja_disable_user', ($nonce_name === 'ja_disable_user_' ? '1' : '0' ) );
+
+			//Redirect back
+			if(isset($_GET['ja_return_url'])) {
+			  wp_safe_redirect($_GET['ja_return_url']);
+			  exit;
+			}
+			else {
+			  wp_die(__('The user has been updated.', 'ja_disable_users'));
+			}
+		}
+		else {
+			wp_die(__('You are not allowed to perform this action, or your nonce expired.', 'ja_disable_users'));
+		}
+    }
 
 	/**
 	 * Load the textdomain so we can support other languages
@@ -70,7 +111,7 @@ final class ja_disable_users {
 	public function use_profile_field( $user ) {
 
 		// Only show this option to users who can delete other users
-		if ( !current_user_can( 'edit_users' ) )
+		if ( !current_user_can( $this->get_edit_cap() ) )
 			return;
 		?>
 		<table class="form-table">
@@ -81,7 +122,7 @@ final class ja_disable_users {
 					</th>
 					<td>
 						<input type="checkbox" name="ja_disable_user" id="ja_disable_user" value="1" <?php checked( 1, get_the_author_meta( 'ja_disable_user', $user->ID ) ); ?> />
-						<span class="description"><?php _e( 'If checked, the user cannot login with this account.' , 'ja_disable_users' ); ?></span>
+						<span class="description"><?php _e( 'If checked, the user will not be able to login with this account.' , 'ja_disable_users' ); ?></span>
 					</td>
 				</tr>
 			<tbody>
@@ -104,7 +145,7 @@ final class ja_disable_users {
 		if ( !isset( $_POST['ja_disable_user'] ) ) {
 			$disabled = 0;
 		} else {
-			$disabled = $_POST['ja_disable_user'];
+			$disabled = (int)$_POST['ja_disable_user'];
 		}
 	 
 		update_user_meta( $user_id, 'ja_disable_user', $disabled );
@@ -167,7 +208,7 @@ final class ja_disable_users {
 	 */
 	public function manage_users_columns( $defaults ) {
 
-		$defaults['ja_user_disabled'] = __( 'Disabled', 'ja_disable_users' );
+		$defaults['ja_user_disabled'] = __( 'User status', 'ja_disable_users' );
 		return $defaults;
 	}
 
@@ -183,9 +224,24 @@ final class ja_disable_users {
 	public function manage_users_column_content( $empty, $column_name, $user_ID ) {
 
 		if ( $column_name == 'ja_user_disabled' ) {
-			if ( get_the_author_meta( 'ja_disable_user', $user_ID )	== 1 ) {
-				return __( 'Disabled', 'ja_disable_users' );
-			}
+
+          //Super admins can't be disabled
+          if(is_super_admin($user_ID)) {
+            return '<span class="ja-user-enabled">&#x2714;</span>';
+          }
+
+		  $user_disabled = (get_the_author_meta( 'ja_disable_user', $user_ID ) == 1);
+          $nonce = $user_disabled ? wp_create_nonce( 'ja_enable_user_'. $user_ID ) : wp_create_nonce( 'ja_disable_user_'. $user_ID );
+          $return_url = urlencode_deep((is_ssl() ? 'https' : 'http') . '://' . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"]);
+
+          if($user_disabled) {
+            $link_url = admin_url("admin-post.php?action=ja_enable_user&ja_user_id={$user_ID}&ja_nonce={$nonce}&ja_return_url={$return_url}&message=1");
+            return '<span class="ja-user-disabled">&#x2718;</span><br><a href="'. esc_attr__($link_url) .'">'. __('Enable', 'ja_disable_users') .'</a>';
+          }
+          else {
+            $link_url = admin_url("admin-post.php?action=ja_disable_user&ja_user_id={$user_ID}&ja_nonce={$nonce}&ja_return_url={$return_url}&message=1");
+            return '<span class="ja-user-enabled">&#x2714;</span> <br><a href="'. esc_attr__($link_url) .'">'. __('Disable', 'ja_disable_users') .'</a>';
+          }
 		}
 	}
 
@@ -195,7 +251,23 @@ final class ja_disable_users {
 	 * @since 1.0.3
  	 */
 	public function manage_users_css() {
-		echo '<style type="text/css">.column-ja_user_disabled { width: 80px; }</style>';
+		?>
+	    <style type="text/css">
+		    .column-ja_user_disabled {
+			    width: 80px;
+		    }
+
+		    span.ja-user-enabled {
+			    font-size: 30px;
+			    color: green;
+		    }
+
+		    span.ja-user-disabled {
+			    font-size: 30px;
+			    color: red;
+		    }
+	    </style>
+		<?php
 	}
 }
 new ja_disable_users();
