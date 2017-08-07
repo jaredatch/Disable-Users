@@ -74,7 +74,7 @@ final class ja_disable_users {
 			  wp_die(__('Super admins can not be disabled.', 'ja_disable_users'));
 			}
 
-			update_user_meta( (int)$_GET['ja_user_id'], 'ja_disable_user', ($nonce_name === 'ja_disable_user_' ? '1' : '0' ) );
+			update_user_meta( (int)$_GET['ja_user_id'], 'ja_disable_user', ($nonce_name === 'ja_disable_user_' ? true : false) );
 
 			//Redirect back
 			if(isset($_GET['ja_return_url'])) {
@@ -151,9 +151,9 @@ final class ja_disable_users {
 			return;
 
 		if ( !isset( $_POST['ja_disable_user'] ) ) {
-			$disabled = 0;
+			$disabled = false;
 		} else {
-			$disabled = (int)$_POST['ja_disable_user'];
+			$disabled = (int)$_POST['ja_disable_user'] ? true : false;
 		}
 	 
 		update_user_meta( $user_id, 'ja_disable_user', $disabled );
@@ -173,7 +173,7 @@ final class ja_disable_users {
           $disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
 
           // Is the use logging in disabled?
-          if ( $disabled == '1' ) {
+          if ( $disabled ) {
             return new WP_Error('ja_user_disabled',__('<strong>ERROR</strong>: Account disabled.', 'ja_disable_users'));
           }
         }
@@ -213,7 +213,7 @@ final class ja_disable_users {
             return '<span class="ja-user-enabled">&#x2714;</span>';
           }
 
-		  $user_disabled = (get_the_author_meta( 'ja_disable_user', $user_ID ) == 1);
+		  $user_disabled = get_the_author_meta( 'ja_disable_user', $user_ID );
           $nonce = $user_disabled ? wp_create_nonce( 'ja_enable_user_'. $user_ID ) : wp_create_nonce( 'ja_disable_user_'. $user_ID );
           $return_url = urlencode_deep((is_ssl() ? 'https' : 'http') . '://' . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"]);
 
