@@ -237,6 +237,8 @@ final class ja_disable_users {
 				return '<span class="ja-user-enabled">&#x2714;</span> <br><a href="' . esc_attr__( $link_url ) . '">' . __( 'Disable', 'ja_disable_users' ) . '</a>';
 			}
 		}
+
+		return $empty;
 	}
 
 	/**
