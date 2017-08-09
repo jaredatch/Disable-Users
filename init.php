@@ -76,6 +76,10 @@ final class ja_disable_users {
 
 			update_user_meta( (int) $_GET['ja_user_id'], 'ja_disable_user', ( $nonce_name === 'ja_disable_user_' ? true : false ) );
 
+			//Log out user - https://wordpress.stackexchange.com/questions/184161/destroy-user-sessions-based-on-user-id
+			$sessions = WP_Session_Tokens::get_instance( (int) $_GET['ja_user_id'] );
+			$sessions->destroy_all();
+
 			//Redirect back
 			if ( isset( $_GET['ja_return_url'] ) ) {
 				wp_safe_redirect( $_GET['ja_return_url'] );
