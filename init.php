@@ -179,7 +179,7 @@ final class ja_disable_users {
 
 			// Is the use logging in disabled?
 			if ( $disabled ) {
-				return new WP_Error( 'ja_user_disabled', __( '<strong>ERROR</strong>: Account disabled.', 'ja_disable_users' ) );
+				return new WP_Error( 'ja_user_disabled', apply_filters( 'js_user_disabled_message', __( '<strong>ERROR</strong>: Account disabled.', 'ja_disable_users' ) ) );
 			}
 		}
 
