@@ -40,6 +40,14 @@ Yes, there is a filter in place for that, `ja_disable_users_notice`.
 
 == Changelog ==
 
+= 2.0 =
+
+* Add multisite compatibility
+* Add enable/disable links from user lists
+* Use better hook for user login checking (supports XML-RPC)
+* Add Swedish translation
+* Reformat code to WordPress official code style
+
 = 1.0.5 (11/11/2015) =
 * Added pl_PL transnation - Props Dominik Kocuj
 
