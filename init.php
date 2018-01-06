@@ -68,9 +68,10 @@ final class ja_disable_users {
 	 * @param object $user
 	 */
 	public function use_profile_field( $user ) {
-
-		// Only show this option to users who can delete other users
-		if ( !current_user_can( 'edit_users' ) )
+		global $current_screen;
+		
+		// Only show this option to users who can delete other users and don't show it for your own profile
+		if ( !current_user_can( 'edit_users' ) || $current_screen->id == 'profile' )
 			return;
 		?>
 		<table class="form-table">
