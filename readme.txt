@@ -1,9 +1,9 @@
 === Disable Users ===
-Contributors: jaredatch
+Contributors: jaredatch, khromov, gabehab
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AD8KTWTTDX9JL
 Tags: users, login, disable
 Requires at least: 4.0.0
-Tested up to: 4.3
+Tested up to: 4.8
 Stable tag: trunk
 License: GPLv2
  
@@ -39,6 +39,16 @@ Yes, there is a filter in place for that, `ja_disable_users_notice`.
 2. Message when a disabled user tries to login.
 
 == Changelog ==
+= 2.1 =
+* Added bulk action which allows toggle of multiple users at once.
+
+= 2.0 =
+
+* Add multisite compatibility
+* Add enable/disable links from user lists
+* Use better hook for user login checking (supports XML-RPC)
+* Add Swedish translation
+* Reformat code to WordPress official code style
 
 = 1.0.5 (11/11/2015) =
 * Added pl_PL transnation - Props Dominik Kocuj
