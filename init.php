@@ -129,7 +129,7 @@ final class ja_disable_users {
 		// Get user meta
 		$disabled = get_user_meta( $user->ID, 'ja_disable_user', true );
 		
-		// Is the use logging in disabled?
+		// Is the user logging in disabled?
 		if ( $disabled == '1' ) {
 			// Clear cookies, a.k.a log user out
 			wp_clear_auth_cookie();
